@@ -10,7 +10,7 @@ contract ChainLinkBoxWizard is VRFConsumerBaseV2 {
     // Token token;
     VRFCoordinatorV2Interface COORDINATOR;
 
-    uint256 private constant ROLL_IN_PROGRESS = 0;
+    uint256 internal constant ROLL_IN_PROGRESS = 0;
     address constant vrfCoordinator = 0x8103B0A8A00be2DDC778e6e7eaa21791Cd364625;   // Address LINK - hardcoded for Sepolia
     bytes32 constant s_keyHash = 0x474e34a077df58807dbe9c96d3c009b23b3c6d0cce433e59bbf5b34f823bc56c;    // address WRAPPER - hardcoded for Sepolia
     uint64 s_subscriptionId;    // chainlink subscription ID
@@ -19,7 +19,7 @@ contract ChainLinkBoxWizard is VRFConsumerBaseV2 {
     uint32 constant numWords = 1;   // 요청할 난수의 개수 (최대 10개 가능)
 
     mapping(uint256 => address) private s_rollers;  // map rollers to requestIds
-    mapping(address => uint256) private s_results;  // map vrf results to rollers
+    mapping(address => uint256) internal s_results;  // map vrf results to rollers
 
     constructor(uint64 subscriptionId) VRFConsumerBaseV2(vrfCoordinator) {
         COORDINATOR = VRFCoordinatorV2Interface(vrfCoordinator);
@@ -27,7 +27,7 @@ contract ChainLinkBoxWizard is VRFConsumerBaseV2 {
         // token = Token(_tokenAddress);
     }
 
-    function rollDice(address roller) public returns (uint256 requestId) {
+    function openBox(address roller) public returns (uint256 requestId) {
         requestId = COORDINATOR.requestRandomWords(
             s_keyHash,
             s_subscriptionId,
@@ -42,37 +42,26 @@ contract ChainLinkBoxWizard is VRFConsumerBaseV2 {
     function fulfillRandomWords(uint256 requestId, uint256[] memory randomWords) internal override {
         uint256 randomNumber = (randomWords[0] % 1000000) + 1; // random number 1 ~ 1,000,000
 
-        if (randomNumber <= 9) {                // 0.0009%
+        if (randomNumber <= 9) {                // 1 -> 0.0001%
             s_results[s_rollers[requestId]] = 1;
-        } else if (randomNumber <= 1009) {      // 0.1%
+        } else if (randomNumber <= 1000) {
             s_results[s_rollers[requestId]] = 2;
-        } else if (randomNumber <= 21009) {     // 2%
+        } else if (randomNumber <= 20000) {
             s_results[s_rollers[requestId]] = 3;
-        } else if (randomNumber <= 121009) {    // 10%
+        } else if (randomNumber <= 100000) {
             s_results[s_rollers[requestId]] = 4;
-        } else if (randomNumber <= 421009) {    // 30%
+        } else if (randomNumber <= 500000) {
             s_results[s_rollers[requestId]] = 5;
-        } else {                                // 55%
+        } else {
             s_results[s_rollers[requestId]] = 6;
         }
     }
 
-    function furniture(address player) public view returns (string memory) {
+    function product(address player) public view returns (string memory) {
         require(s_results[player] != 0, "Dice not rolled");
         require(s_results[player] != ROLL_IN_PROGRESS, "Roll in progress");
-        return getFurnitureName(s_results[player]);
+        return getProductName(s_results[player]);
     }
 
-    function getFurnitureName(uint256 id) internal pure returns (string memory) {
-        string[6] memory furnitureNames = [
-            "Supreme Luxury Edition",
-            "Exquisite Opulence",
-            "Luxury Living",
-            "Classic Elegance",
-            "Affordable Comfort",
-            "Simplicity Collection"
-        ];
-
-        return furnitureNames[id - 1];
-    }
+    function getProductName(uint256 id) internal view virtual returns (string memory) {}
 }

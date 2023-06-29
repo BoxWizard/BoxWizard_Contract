@@ -4,7 +4,7 @@ pragma solidity ^0.8.10;
 import './Token.sol';
 import { BoxWizard } from "./BoxWizard.sol";
 
-contract CreateBoxWizard {
+contract CreateRandomBox {
     // Token token;
 
     struct BoxWizardInfo {

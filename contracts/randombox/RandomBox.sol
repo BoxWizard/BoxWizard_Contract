@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
 
-contract BoxWizard {
+contract RandomBox {
     address boxOwner;
     uint256 public boxGrade;    // Box 등급
     uint256 public boxNumber = 0;   // 당첨 상품 Number
