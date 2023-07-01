@@ -27,8 +27,8 @@ contract ChainLinkBoxWizard is VRFConsumerBaseV2 {
         // token = Token(_tokenAddress);
     }
 
-    function openBox(address roller) public returns (uint256 requestId) {
-        requestId = COORDINATOR.requestRandomWords(
+    function openBox() public returns (uint256) {
+        uint256 requestId = COORDINATOR.requestRandomWords(
             s_keyHash,
             s_subscriptionId,
             requestConfirmations,
@@ -36,25 +36,29 @@ contract ChainLinkBoxWizard is VRFConsumerBaseV2 {
             numWords
         );
 
-        s_rollers[requestId] = roller;
+        s_rollers[requestId] = msg.sender;
+        return requestId;
     }
 
     function fulfillRandomWords(uint256 requestId, uint256[] memory randomWords) internal override {
         uint256 randomNumber = (randomWords[0] % 1000000) + 1; // random number 1 ~ 1,000,000
 
+        uint16 boxGrade;
         if (randomNumber <= 9) {                // 1 -> 0.0001%
-            s_results[s_rollers[requestId]] = 1;
+            boxGrade = 1;
         } else if (randomNumber <= 1000) {
-            s_results[s_rollers[requestId]] = 2;
+            boxGrade = 2;
         } else if (randomNumber <= 20000) {
-            s_results[s_rollers[requestId]] = 3;
+            boxGrade = 3;
         } else if (randomNumber <= 100000) {
-            s_results[s_rollers[requestId]] = 4;
+            boxGrade = 4;
         } else if (randomNumber <= 500000) {
-            s_results[s_rollers[requestId]] = 5;
+            boxGrade = 5;
         } else {
-            s_results[s_rollers[requestId]] = 6;
+            boxGrade = 6;
         }
+
+        s_results[s_rollers[requestId]] = boxGrade;
     }
 
     function product(address player) public view returns (string memory) {
