@@ -1,27 +1,26 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
 
-import './Token.sol';
-import { RandomBox } from "./RandomBox.sol";
+import "./Token.sol";
+import "./RandomBox.sol";
 
 contract CreateRandomBox {
-    // Token token;
-
     struct RandomBoxInfo {
-        address msgSender;
-        RandomBox randomBoxAddress;
+        address owner;
+        RandomBox randomBox;
     }
 
-    RandomBoxInfo[] public randomBoxInfoArray;
+    mapping(address => RandomBoxInfo[]) private randomBoxInfoMap;
 
+    // 랜덤 박스를 생성합니다.
     function getRandomBox() public {
         uint256 randomNumber = uint256(keccak256(abi.encodePacked(block.difficulty, block.timestamp, msg.sender)));
-        uint256 index = (randomNumber % 1000000) + 1; // random number 1 ~ 1,000,000
+        uint256 index = (randomNumber % 1000000) + 1; // 1 ~ 1,000,000
 
         uint16 boxGrade;
         address owner = msg.sender;
 
-        if (index <= 9) {                // 1 -> 0.0001%
+        if (index <= 9) {
             boxGrade = 1;
         } else if (index <= 1000) {
             boxGrade = 2;
@@ -36,26 +35,18 @@ contract CreateRandomBox {
         }
 
         require(boxGrade != 0, "This is the wrong box!");
+
         RandomBox newRandomBox = new RandomBox(boxGrade, owner);
-        randomBoxInfoArray.push(RandomBoxInfo(owner, newRandomBox));
+        randomBoxInfoMap[owner].push(RandomBoxInfo(owner, newRandomBox));
     }
 
-    function getMyRandomBox(address _myAddress) view public returns(RandomBox[] memory) {
-        uint256 j = 0;
-        uint256 k = 0;
+    // 특정 주소에 대한 랜덤 박스 정보를 조회합니다.
+    function getMyRandomBox(address _myAddress) public view returns (RandomBox[] memory) {
+        uint256 boxCount = randomBoxInfoMap[_myAddress].length;
 
-        for (uint256 i = 0; i < randomBoxInfoArray.length; i++){
-            if(randomBoxInfoArray[i].msgSender == _myAddress){
-                j++;
-            }
-        }
-
-        RandomBox[] memory myRandomBox = new RandomBox[](j);
-        for (uint256 i = 0; i < randomBoxInfoArray.length; i++){
-            if(randomBoxInfoArray[i].msgSender == _myAddress){
-                myRandomBox[k] = randomBoxInfoArray[i].randomBoxAddress;
-                k++;
-            }
+        RandomBox[] memory myRandomBox = new RandomBox[](boxCount);
+        for (uint256 i = 0; i < boxCount; i++) {
+            myRandomBox[i] = randomBoxInfoMap[_myAddress][i].randomBox;
         }
 
         return myRandomBox;
